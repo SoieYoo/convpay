@@ -11,6 +11,9 @@ public class ConveniencePayService {
     private final MoneyAdapter moneyAdapter = new MoneyAdapter();
     private final CardAdapter cardAdapter = new CardAdapter();
 
+    //정책이 결제수단으로 할인하는 것으로 정해짐!
+    private final DiscountInterface discountInterface = new DiscountByPayMethod();
+
     //결제
     public PayResponse pay(PayRequest payRequest) {
         PaymentInterface paymentInterface;
@@ -21,12 +24,14 @@ public class ConveniencePayService {
             paymentInterface = moneyAdapter;
         }
 
-        PaymentResult paymentResult = paymentInterface.payment(payRequest.getPayAmout());
+        Integer discountedAmount = discountInterface.getDiscountedAmount(payRequest);
+
+        PaymentResult paymentResult = paymentInterface.payment(discountedAmount);
 
         if(paymentResult == PaymentResult.PAYMENT_FAIL) {
             return new PayResponse(PayResult.FAIL, 0);
         }
-        return new PayResponse(PayResult.SUCCESS, payRequest.getPayAmout());
+        return new PayResponse(PayResult.SUCCESS, discountedAmount);
     }
 
     //결제 취소
